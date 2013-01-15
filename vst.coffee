@@ -10,21 +10,21 @@ if not VST_LOADED
 
     tt = [[],[],[],[],[],[],[]]     # Time table
     tc = [[],[],[],[],[],[],[]]     # Time conflict
-    visable = true                  # visibility of the timetable
+    visible = true                  # visibility of the timetable
 
     go_to = (dept, ccode='')->
         # An example: https://w5.ab.ust.hk/wcq/cgi-bin/1220/
         dept = dept.toUpperCase()
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         url = "https://w5.ab.ust.hk/wcq/cgi-bin/#{semcode}/subject/#{dept}"
-        $('div#classes').load url + ' div#classes', ->
+        $('div#classes').load url+' div#classes', ->
             document.title = dept + document.title[4..]
             $('tr.sectodd, tr.secteven').unbind('click').click click_event
             if not ccode
                 $('body').scrollTop(0)
             else
                 $(window).scrollTop($("a[name=#{dept+ccode}]").offset().top-navHeight)
-        false
+        return false
 
     hsv_to_rgb = (h, s, v)->
         h_i = Math.floor(h*6)
@@ -103,7 +103,7 @@ if not VST_LOADED
         return result
         
     click_event = ->
-        if not visable
+        if not visible
             return
 
         console?.log "click event fired"
@@ -114,8 +114,8 @@ if not VST_LOADED
 
         timeslots = []
         
-        course_name = $(@).parents('.course').find('h2').text()
-        course_code = course_name[...course_name.indexOf('-')-1]
+        course_name  = $(@).parents('.course').find('h2').text()
+        course_code  = course_name[...course_name.indexOf('-')-1]
         course_color = get_random_color()
 
 
@@ -159,7 +159,7 @@ if not VST_LOADED
 
         generate_table()
         
-        false   # return value
+        return false   # return value
         #console?.log datetime
 
     delete_sect = (sect)->
@@ -172,60 +172,31 @@ if not VST_LOADED
             tt[dow] = temp_arr[..]
 
         generate_table()
-        false   # return value
+        return false   # return value
 
     generate_table = ->
-        # 18 is 9am
-        max_time = 18
-        min_time = 18
+        # 18 is 09:00, 37 is 18:30
+        # the idiom [].concat(array...) flattens the array
+        # ie. [[1,2,3],[4,5,6],[7,8,9]] -> [1,2,3,4,5,6,7,8,9]
+        earliest_start_time = Math.min(18, (l.start_time for l in [].concat(tt...))..., (l.start_time for l in [].concat(tc...))...)
+        latest_end_time     = Math.max(37, (l.end_time for l in [].concat(tt...))..., (l.end_time for l in [].concat(tc...))...)
 
-        # <<<< Find the range which should be rendered
-        for dow in [0..6]
-            for l in tt[dow]
-                if l.end_time > max_time
-                    max_time = l.end_time
-                if l.start_time < min_time
-                    min_time = l.start_time
-        for dow in [0..6]
-            for l in tc[dow]
-                if l.end_time > max_time
-                    max_time = l.end_time
-                if l.start_time < min_time
-                    min_time = l.start_time
-        # Find the range which should be rendered >>>>
-        
-
-        # <<<< the table and its style
-        tbl = document.createElement('table')
-        tbl.id = 'vst'
-        tbl.style.border = 0
-        tbl.style.borderCollapse = 'collapse'
-        # the table and its style >>>>
-
-
-        # <<<< table header's content
         DAYS = ['Time','MON', 'TUE', 'WED', 'THU', 'FRI']
-        SAT_SUN = tt[6].length isnt 0 or tc[6].length isnt 0
+        SUN = tt[6].length isnt 0 or tc[6].length isnt 0
         SAT     = tt[5].length isnt 0 or tc[5].length isnt 0
-        if SAT_SUN
+        if SUN
             DAYS.push('SAT', 'SUN')
         else if SAT
             DAYS.push('SAT')
-        # table header's content >>>>
 
-        # <<<< create thead elems
-        tbl_thead = document.createElement('thead')
-        for D in DAYS
-            td = document.createElement('th')
-            td_textnode = document.createTextNode(D)
-            td.appendChild(td_textnode)
-            tbl_thead.appendChild(td)
-        tbl.appendChild(tbl_thead)
-        # create thead elems >>>>
+        # exclude the 'Time'
+        range = DAYS.length - 1 
+        # \u00A0 is &nbsp;
+        empty_cell = '\u00A0'
+        # delete previous content
+        $('#container').empty()
 
-        # one row
-        for row in [min_time..max_time]
-        
+        make_time_str = (hr)->
             hr = Math.floor(row/2)
             # pad zero
             if hr <= 9
@@ -238,108 +209,48 @@ if not VST_LOADED
                 time_str = hr + ':00-' + hr + ':20'
             else
                 time_str = hr + ':30-' + hr + ':50'
-        
 
-            tbl_row = document.createElement('tr')
+            return time_str
 
-            time_td = document.createElement('td')
-            time_td_text_node = document.createTextNode(time_str)
-            time_td.appendChild(time_td_text_node)
-            tbl_row.appendChild(time_td)
+        tableDOM = DOMinate(
+            [document.getElementById('container'),
+                ['table#vst',
+                    ['thead'].concat((['th', header] for header in DAYS)),
+                    ['tbody'].concat(["tr\#r#{row}"].concat([['td', make_time_str(row)]], (["td\#c#{col}", empty_cell] for col in [1..range])) for row in [earliest_start_time..latest_end_time])
+                    {'class': 'table table-bordered table-condensed'}
+                ]
+            ]
+        )
 
-            for col in [0..6]
-            
-                if col is 5
-                    if not (SAT_SUN or SAT)
-                        continue
-                if col is 6
-                    if not SAT_SUN
-                        continue
-                        
-                done = false
+        make_div_content = (l) ->
+            c = "#{l.ccode}<br />#{l.section[...l.section.indexOf(' ')]}"
+            # brs = l.end_time - l.start_time + 1 - 2
+            # while brs > 0
+            #     c += '<br />\u00A0'
+            #     brs -= 1
+            return c
 
-                cell = 
-                    content: '---'
-                    js: ''
-                    css:
-                        bgc: ''
-                        border:
-                            Top   : ''
-                            Left  : ''
-                            Right : ''
-                            Bottom: ''
 
-                for l in tt[col]
+        for dow in [0...range]
+            for l in tt[dow]
+                $("<div class='mydiv' style='background-color: #{l.color}; height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>#{make_div_content(l)}</div>").
+                click(((sect)->
+                           ->
+                               delete_sect(sect)
+                               return false
+                )(l.section)).
+                appendTo("\#r#{l.start_time} \#c#{l.dow+1}")
 
-                    if done
-                        break
-
-                    if l.start_time is row
-                        cell.css.border.Top = '1px solid black'
-                        cell.content = l.ccode
-                        done = true
-                    else if (l.start_time + 1) is row
-                        if (l.start_time+1) is l.end_time
-                            cell.css.border.Bottom = '1px solid black'
-                            cell.content = l.section[...l.section.indexOf(' ')]
-                        else
-                            cell.content = l.section[...l.section.indexOf(' ')]
-
-                        done = true
-                    else if (row > l.start_time and row < l.end_time)
-                        done = true
-                        cell.content = ''
-                    else if l.end_time is row
-                        cell.css.border.Bottom = '1px solid black'
-                        cell.content = ''
-                        done = true
-
-                    if done
-                        cell.js = ((sect)->
-                            ->
-                                delete_sect(sect)
-                                false
-                        )(l.section)
-                        cell.css.bgc = l.color
-                        cell.css.border.Left = cell.css.border.Right = '1px solid black'
-
-                # <<<< Override the CSS in case of TIME CONFLICT
-                for l in tc[col]
-                    if row is l.start_time
-                        cell.css.border.Top = '2px dashed red'
-                        cell.css.border.Left = cell.css.border.Right = '2px dashed red'
-                    else if row > l.start_time and row < l.end_time
-                        cell.css.border.Left = cell.css.border.Right = '2px dashed red'
-                    else if row is l.end_time
-                        cell.css.border.Left = cell.css.border.Right = '2px dashed red'
-                        cell.css.border.Bottom = '2px dashed red'
-                # Override the CSS in case of TIME CONFLICT >>>>
-
-                cell_td = document.createElement('td')
-                cell_td_text_node = document.createTextNode(cell.content)
-                cell_td.appendChild(cell_td_text_node)
-                
-                if cell.css.bgc
-                    cell_td.style.backgroundColor = cell.css.bgc
-
-                for own k, v of cell.css.border
-                    if cell.css.border[k]
-                        cell_td.style['border'+k] = v
-
-                if cell.js
-                    $(cell_td).click cell.js
-
-                tbl_row.appendChild(cell_td)
-            
-            tbl.appendChild(tbl_row)
-
-        
-        $('#container').empty().append(tbl)
+        for dow in [0...range]
+            for l in tc[dow]
+                $("<div class='time-conflict' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>\u00A0</div>").
+                appendTo("\#r#{l.start_time} \#c#{l.dow+1}").
+                click()
 
         # console?.log table_html
         # console?.log max_time
         # console?.log tt
-        false   # return value
+        return false
 
 
     ###
@@ -348,7 +259,95 @@ if not VST_LOADED
 
     $(
         """
-            <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 0; bottom: 0; z-index: 1000; ">
+            <style>
+/*!
+ * Bootstrap v2.2.2
+ *
+ * Copyright 2012 Twitter, Inc
+ * Licensed under the Apache License v2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Designed and built with all the love in the world @twitter by @mdo and @fat.
+ */
+.clearfix{*zoom:1;}.clearfix:before,.clearfix:after{display:table;content:"";line-height:0;}
+.clearfix:after{clear:both;}
+.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}
+.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}
+table{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}
+.table{width:100%;margin-bottom:20px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}
+.table th{font-weight:bold;}
+.table thead th{vertical-align:bottom;}
+.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}
+.table tbody+tbody{border-top:2px solid #dddddd;}
+.table .table{background-color:#ffffff;}
+.table-condensed th,.table-condensed td{padding:4px 5px;}
+.table-bordered{border:1px solid #dddddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}.table-bordered th,.table-bordered td{border-left:1px solid #dddddd;}
+.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0;}
+.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}
+.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}
+.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child{-webkit-border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px;border-bottom-left-radius:4px;}
+.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child{-webkit-border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px;border-bottom-right-radius:4px;}
+.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;-moz-border-radius-bottomleft:0;border-bottom-left-radius:0;}
+.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;-moz-border-radius-bottomright:0;border-bottom-right-radius:0;}
+.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}
+.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}
+.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9;}
+.table-hover tbody tr:hover td,.table-hover tbody tr:hover th{background-color:#f5f5f5;}
+table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span"],.row-fluid table th[class*="span"]{display:table-cell;float:none;margin-left:0;}
+.table td.span1,.table th.span1{float:none;width:44px;margin-left:0;}
+.table td.span2,.table th.span2{float:none;width:124px;margin-left:0;}
+.table td.span3,.table th.span3{float:none;width:204px;margin-left:0;}
+.table td.span4,.table th.span4{float:none;width:284px;margin-left:0;}
+.table td.span5,.table th.span5{float:none;width:364px;margin-left:0;}
+.table td.span6,.table th.span6{float:none;width:444px;margin-left:0;}
+.table td.span7,.table th.span7{float:none;width:524px;margin-left:0;}
+.table td.span8,.table th.span8{float:none;width:604px;margin-left:0;}
+.table td.span9,.table th.span9{float:none;width:684px;margin-left:0;}
+.table td.span10,.table th.span10{float:none;width:764px;margin-left:0;}
+.table td.span11,.table th.span11{float:none;width:844px;margin-left:0;}
+.table td.span12,.table th.span12{float:none;width:924px;margin-left:0;}
+.table tbody tr.success td{background-color:#dff0d8;}
+.table tbody tr.error td{background-color:#f2dede;}
+.table tbody tr.warning td{background-color:#fcf8e3;}
+.table tbody tr.info td{background-color:#d9edf7;}
+.table-hover tbody tr.success:hover td{background-color:#d0e9c6;}
+.table-hover tbody tr.error:hover td{background-color:#ebcccc;}
+.table-hover tbody tr.warning:hover td{background-color:#faf2cc;}
+.table-hover tbody tr.info:hover td{background-color:#c4e3f3;}
+            </style>
+            <style type="text/css">
+                table#vst td {
+                    /*border: 1px black solid;*/
+                    /*font-family:monospace;*/
+                    background-color: white;
+                    position: relative;
+                    padding: 0px;
+                    white-space: nowrap;
+                    height: 20px;
+                    width: 90px;
+                }
+                table#vst th {
+
+                }
+                .mydiv {
+                    width: 100%;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    z-index: 2;
+                    text-align: center;
+                }
+                .time-conflict {
+                    border: 2px red dotted;
+                    width: 100%;
+                    position: absolute;
+                    left: -2px;
+                    top:  -2px;
+                    z-index: 3;
+                }
+            </style>
+            <script src="https://raw.github.com/adius/DOMinate/master/src/dominate.min.js" type="text/javascript"></script>
+            <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; ">
                 <div id="container"></div>
                 <a href="#" id="toggle_show">show/hide</a>
             </div>
@@ -356,9 +355,9 @@ if not VST_LOADED
     ).appendTo('body')
 
     $('#toggle_show').click ->
-        $('#container').toggle()
-        visable = not visable
-        false
+        $('#container').toggle(120)
+        visible = not visible
+        return false
 
     highlight = ->
         this.style.border = "2px solid yellow"
@@ -378,8 +377,10 @@ if not VST_LOADED
             $('tr.sectodd, tr.secteven').unbind('click').click click_event
             # window.location.hash = '#'
             $('body').scrollTop(0)
-            false
-        false #return value
+            return false
+        return false
+
+    generate_table()
 
     VST_LOADED = true
 
