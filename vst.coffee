@@ -317,6 +317,7 @@ table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span
             </style>
             <style type="text/css">
                 table#vst td {
+                    display: block;
                     /*border: 1px black solid;*/
                     /*font-family:monospace;*/
                     background-color: white;
@@ -327,7 +328,7 @@ table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span
                     width: 90px;
                 }
                 table#vst th {
-
+                    background-color: white;
                 }
                 .mydiv {
                     width: 100%;
