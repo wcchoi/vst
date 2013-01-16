@@ -212,12 +212,12 @@ if not VST_LOADED
 
             return time_str
 
-        tableDOM = DOMinate(
+        DOMinate(
             [document.getElementById('container'),
-                ['table#vst',
+                ['table',
                     ['thead'].concat((['th', header] for header in DAYS)),
-                    ['tbody'].concat(["tr\#r#{row}"].concat([['td', make_time_str(row)]], (["td\#c#{col}", empty_cell] for col in [1..range])) for row in [earliest_start_time..latest_end_time])
-                    {'class': 'table table-bordered table-condensed'}
+                    ['tbody'].concat(['tr'].concat([['td', make_time_str(row)]], (['td', ['div', empty_cell, {'class':'outer'}], {'id': "c#{col}"}] for col in [1..range]), [{'id':"r#{row}"}]) for row in [earliest_start_time..latest_end_time])
+                    {'id': 'vst', 'class': 'table table-bordered table-condensed'}
                 ]
             ]
         )
@@ -239,13 +239,12 @@ if not VST_LOADED
                                delete_sect(sect)
                                return false
                 )(l.section)).
-                appendTo("\#r#{l.start_time} \#c#{l.dow+1}")
+                appendTo("\#r#{l.start_time} \#c#{l.dow+1} div")
 
         for dow in [0...range]
             for l in tc[dow]
                 $("<div class='time-conflict' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>\u00A0</div>").
-                appendTo("\#r#{l.start_time} \#c#{l.dow+1}").
-                click()
+                appendTo("\#r#{l.start_time} \#c#{l.dow+1} div")
 
         # console?.log table_html
         # console?.log max_time
@@ -317,7 +316,6 @@ table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span
             </style>
             <style type="text/css">
                 table#vst td {
-                    display: block;
                     /*border: 1px black solid;*/
                     /*font-family:monospace;*/
                     background-color: white;
@@ -329,6 +327,10 @@ table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span
                 }
                 table#vst th {
                     background-color: white;
+                }
+                .outer {
+                    position: relative;
+                    display: block;
                 }
                 .mydiv {
                     width: 100%;
@@ -347,7 +349,7 @@ table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span
                     z-index: 3;
                 }
             </style>
-            <script src="https://raw.github.com/adius/DOMinate/master/src/dominate.min.js" type="text/javascript"></script>
+            <script src="https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js" type="text/javascript"></script>
             <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; ">
                 <div id="container"></div>
                 <a href="#" id="toggle_show">show/hide</a>
