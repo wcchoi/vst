@@ -3,6 +3,7 @@ var VST_LOADED, bring_to_back, bring_to_top, check_time_conflict, click_event, d
   __slice = [].slice;
 
 if (!VST_LOADED) {
+  VST_LOADED = true;
   tt = [[], [], [], [], [], [], []];
   tc = [[], [], [], [], [], [], []];
   visible = true;
@@ -138,13 +139,7 @@ if (!VST_LOADED) {
     if (!visible) {
       return;
     }
-    if (typeof console !== "undefined" && console !== null) {
-      console.log("click event fired");
-    }
     tc = [[], [], [], [], [], [], []];
-    if (typeof console !== "undefined" && console !== null) {
-      console.log(this);
-    }
     timeslots = [];
     course_name = $(this).parents('.course').find('h2').text();
     course_code = course_name.slice(0, course_name.indexOf('-') - 1);
@@ -196,7 +191,7 @@ if (!VST_LOADED) {
     return false;
   };
   delete_sect = function(sect) {
-    var dow, l, temp_arr, _i, _j, _len, _ref;
+    var dow, l, l_tc, l_tt, no_time_conflict, temp_arr, _i, _j, _k, _l, _len, _len1, _len2, _m, _ref, _ref1, _ref2;
     if (typeof console !== "undefined" && console !== null) {
       console.log(sect);
     }
@@ -211,11 +206,28 @@ if (!VST_LOADED) {
       }
       tt[dow] = temp_arr.slice(0);
     }
+    no_time_conflict = true;
+    for (dow = _k = 0; _k <= 6; dow = ++_k) {
+      _ref1 = tc[dow];
+      for (_l = 0, _len1 = _ref1.length; _l < _len1; _l++) {
+        l_tc = _ref1[_l];
+        _ref2 = tt[dow];
+        for (_m = 0, _len2 = _ref2.length; _m < _len2; _m++) {
+          l_tt = _ref2[_m];
+          if (check_time_conflict(l_tt, l_tc)) {
+            no_time_conflict = false;
+          }
+        }
+      }
+    }
+    if (no_time_conflict) {
+      tc = [[], [], [], [], [], [], []];
+    }
     generate_table();
     return false;
   };
   generate_table = function() {
-    var DAYS, SAT, SUN, col, dow, earliest_start_time, empty_cell, header, l, latest_end_time, make_div_content, make_time_str, range, row, _i, _j, _k, _l, _len, _len1, _ref, _ref1;
+    var DAYS, SAT, SUN, col, dow, earliest_start_time, empty_cell, header, l, latest_end_time, make_div_content, make_time_str, range, row, _i, _j, _k, _l, _len, _len1, _len2, _m, _n, _ref, _ref1, _ref2;
     earliest_start_time = Math.min.apply(Math, [18].concat(__slice.call((function() {
       var _i, _len, _ref, _ref1, _results;
       _ref1 = (_ref = []).concat.apply(_ref, tt);
@@ -332,28 +344,41 @@ if (!VST_LOADED) {
       _ref = tt[dow];
       for (_j = 0, _len = _ref.length; _j < _len; _j++) {
         l = _ref[_j];
-        $("<div class='mydiv' style='background-color: " + l.color + "; height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'>" + (make_div_content(l)) + "</div>").click((function(sect) {
-          return function() {
-            delete_sect(sect);
-            return false;
-          };
-        })(l.section)).appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div");
+        $("<div id='" + l.section + "' class='mydiv' style='background-color: " + l.color + "; height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'>" + (make_div_content(l)) + "</div>").appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div.outer");
       }
     }
     for (dow = _k = 0; 0 <= range ? _k < range : _k > range; dow = 0 <= range ? ++_k : --_k) {
       _ref1 = tc[dow];
       for (_l = 0, _len1 = _ref1.length; _l < _len1; _l++) {
         l = _ref1[_l];
-        $("<div class='time-conflict' style='height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'>\u00A0</div>").appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div");
+        $("<div class='time-conflict' style='height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'>\u00A0</div>").appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div.outer");
       }
     }
+    for (dow = _m = 0; 0 <= range ? _m < range : _m > range; dow = 0 <= range ? ++_m : --_m) {
+      _ref2 = tt[dow];
+      for (_n = 0, _len2 = _ref2.length; _n < _len2; _n++) {
+        l = _ref2[_n];
+        $("<div id='" + l.section + "' class='topmost popup' style='height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'><div class='popupdetail'><a href='#' class='goto'>GOTO</a>\u00A0<a href='#' class='del'>DELETE</a></div></div>").data({
+          'section': l.section,
+          'ccode': l.ccode
+        }).appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div.outer");
+      }
+    }
+    $('.del').click(function() {
+      delete_sect($(this).parents('.popup').first().data('section'));
+      return false;
+    });
+    $('.goto').click(function() {
+      go_to.apply(null, $(this).parents('.popup').first().data('ccode').split(' '));
+      return false;
+    });
     return false;
   };
   /*
           ENTRY POINT
   */
 
-  $("           <style>\n/*!\n* Bootstrap v2.2.2\n*\n* Copyright 2012 Twitter, Inc\n* Licensed under the Apache License v2.0\n* http://www.apache.org/licenses/LICENSE-2.0\n*\n* Designed and built with all the love in the world @twitter by @mdo and @fat.\n*/\n.clearfix{*zoom:1;}.clearfix:before,.clearfix:after{display:table;content:\"\";line-height:0;}\n.clearfix:after{clear:both;}\n.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}\n.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}\ntable{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}\n.table{width:100%;margin-bottom:20px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}\n.table th{font-weight:bold;}\n.table thead th{vertical-align:bottom;}\n.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}\n.table tbody+tbody{border-top:2px solid #dddddd;}\n.table .table{background-color:#ffffff;}\n.table-condensed th,.table-condensed td{padding:4px 5px;}\n.table-bordered{border:1px solid #dddddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}.table-bordered th,.table-bordered td{border-left:1px solid #dddddd;}\n.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0;}\n.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child{-webkit-border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px;border-bottom-left-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child{-webkit-border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px;border-bottom-right-radius:4px;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;-moz-border-radius-bottomleft:0;border-bottom-left-radius:0;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;-moz-border-radius-bottomright:0;border-bottom-right-radius:0;}\n.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9;}\n.table-hover tbody tr:hover td,.table-hover tbody tr:hover th{background-color:#f5f5f5;}\ntable td[class*=\"span\"],table th[class*=\"span\"],.row-fluid table td[class*=\"span\"],.row-fluid table th[class*=\"span\"]{display:table-cell;float:none;margin-left:0;}\n.table td.span1,.table th.span1{float:none;width:44px;margin-left:0;}\n.table td.span2,.table th.span2{float:none;width:124px;margin-left:0;}\n.table td.span3,.table th.span3{float:none;width:204px;margin-left:0;}\n.table td.span4,.table th.span4{float:none;width:284px;margin-left:0;}\n.table td.span5,.table th.span5{float:none;width:364px;margin-left:0;}\n.table td.span6,.table th.span6{float:none;width:444px;margin-left:0;}\n.table td.span7,.table th.span7{float:none;width:524px;margin-left:0;}\n.table td.span8,.table th.span8{float:none;width:604px;margin-left:0;}\n.table td.span9,.table th.span9{float:none;width:684px;margin-left:0;}\n.table td.span10,.table th.span10{float:none;width:764px;margin-left:0;}\n.table td.span11,.table th.span11{float:none;width:844px;margin-left:0;}\n.table td.span12,.table th.span12{float:none;width:924px;margin-left:0;}\n.table tbody tr.success td{background-color:#dff0d8;}\n.table tbody tr.error td{background-color:#f2dede;}\n.table tbody tr.warning td{background-color:#fcf8e3;}\n.table tbody tr.info td{background-color:#d9edf7;}\n.table-hover tbody tr.success:hover td{background-color:#d0e9c6;}\n.table-hover tbody tr.error:hover td{background-color:#ebcccc;}\n.table-hover tbody tr.warning:hover td{background-color:#faf2cc;}\n.table-hover tbody tr.info:hover td{background-color:#c4e3f3;}\n           </style>\n           <style type=\"text/css\">\n               table#vst td {\n                   /*border: 1px black solid;*/\n                   /*font-family:monospace;*/\n                   background-color: white;\n                   position: relative;\n                   padding: 0px;\n                   white-space: nowrap;\n                   height: 20px;\n                   width: 90px;\n               }\n               table#vst th {\n                   background-color: white;\n               }\n               .outer {\n                   position: relative;\n                   display: block;\n               }\n               .mydiv {\n                   width: 100%;\n                   position: absolute;\n                   left: 0;\n                   top: 0;\n                   z-index: 2;\n                   text-align: center;\n               }\n               .time-conflict {\n                   border: 2px red dotted;\n                   width: 100%;\n                   position: absolute;\n                   left: -2px;\n                   top:  -2px;\n                   z-index: 3;\n               }\n           </style>\n           <script src=\"https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js\" type=\"text/javascript\"></script>\n           <div id=\"myTimetable\" style=\"background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; \">\n               <div id=\"container\"></div>\n               <a href=\"#\" id=\"toggle_show\">show/hide</a>\n           </div>").appendTo('body');
+  $("<link rel='stylesheet' type='text/css' href='https://raw.github.com/wcchoi/vst/master/vst.css'>\n<script src=\"https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js\" type=\"text/javascript\"></script>\n<div id=\"myTimetable\" style=\"background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; \">\n    <div id=\"container\"></div>\n    <a href=\"#\" id=\"toggle_show\">show/hide</a>\n</div>").appendTo('body');
   $('#toggle_show').click(function() {
     $('#container').toggle(120);
     visible = !visible;
@@ -382,8 +407,6 @@ if (!VST_LOADED) {
     });
     return false;
   });
-  generate_table();
-  VST_LOADED = true;
 } else {
   alert("VST already loaded");
 }
