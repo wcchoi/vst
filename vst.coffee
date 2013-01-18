@@ -22,7 +22,7 @@ if not VST_LOADED
             document.title = dept + document.title[4..]
             $('tr.sectodd, tr.secteven').unbind('click').click click_event
             if not ccode
-                $('body').scrollTop(0)
+                $(window).scrollTop(0)
             else
                 $(window).scrollTop($("a[name=#{dept+ccode}]").offset().top-navHeight)
         return false
@@ -406,7 +406,7 @@ table#vst th {
             document.title = @href[-4..] + document.title[4..]
             $('tr.sectodd, tr.secteven').unbind('click').click click_event
             # window.location.hash = '#'
-            $('body').scrollTop(0)
+            $(window).scrollTop(0)
             return false
         return false
 

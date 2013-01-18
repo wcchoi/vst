@@ -19,7 +19,7 @@ if (!VST_LOADED) {
       document.title = dept + document.title.slice(4);
       $('tr.sectodd, tr.secteven').unbind('click').click(click_event);
       if (!ccode) {
-        return $('body').scrollTop(0);
+        return $(window).scrollTop(0);
       } else {
         return $(window).scrollTop($("a[name=" + (dept + ccode) + "]").offset().top - navHeight);
       }
@@ -402,7 +402,7 @@ if (!VST_LOADED) {
     $('div#classes').load(this.href + ' div#classes', function() {
       document.title = _this.href.slice(-4) + document.title.slice(4);
       $('tr.sectodd, tr.secteven').unbind('click').click(click_event);
-      $('body').scrollTop(0);
+      $(window).scrollTop(0);
       return false;
     });
     return false;
