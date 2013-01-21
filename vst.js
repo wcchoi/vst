@@ -403,9 +403,13 @@ if (!VST_LOADED) {
     semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1];
     $('div#classes').load("https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20" + semcode.slice(0, 2) + "&p_reg_semes_cde=" + semcode[2], function() {
       var L, LA, T, course_code, courses, dept, i, my_call_back, numeric_code, xml_code, _i, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
-      console.log($('div#classes').html());
+      if (typeof console !== "undefined" && console !== null) {
+        console.log($('div#classes').html());
+      }
       xml_code = (_ref = $('div#classes').html().match(/id="xml" value="(.*?)"/)) != null ? _ref[1] : void 0;
-      console.log(xml_code);
+      if (typeof console !== "undefined" && console !== null) {
+        console.log(xml_code);
+      }
       if (!xml_code) {
         alert("ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually");
         return false;

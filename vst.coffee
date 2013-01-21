@@ -418,9 +418,9 @@ table#vst th {
 
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         $('div#classes').load "https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20#{semcode[..1]}&p_reg_semes_cde=#{semcode[2]}", ->
-            console.log $('div#classes').html()
+            console?.log $('div#classes').html()
             xml_code = $('div#classes').html().match(/id="xml" value="(.*?)"/)?[1]
-            console.log xml_code
+            console?.log xml_code
             if not xml_code
                 alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
                 return false
@@ -451,7 +451,7 @@ table#vst th {
                     ->
                         $("a[name=#{dept+numeric_code}]").parents('.course').find('.sections').find('tr').each ->
                             first_cell_content = $(@).find('td').first().text()
-                            # console.log first_cell_content
+                            # console?.log first_cell_content
                             first_cell_content = first_cell_content[...first_cell_content.indexOf(' ')]
                             if first_cell_content is L or first_cell_content is T or first_cell_content is LA
                                 $(@).click()
@@ -460,7 +460,7 @@ table#vst th {
 
                 go_to(dept, numeric_code, my_call_back)
 
-                # console.log course_code, L, T, LA
+                # console?.log course_code, L, T, LA
 
         return false
 
