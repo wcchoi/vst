@@ -418,17 +418,32 @@ table#vst th {
 
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         $('div#classes').load "https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20#{semcode[..1]}&p_reg_semes_cde=#{semcode[2]}", ->
+            console.log $('div#classes').html()
             xml_code = $('div#classes').html().match(/id="xml" value="(.*?)"/)?[1]
+            console.log xml_code
             if not xml_code
                 alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
                 return false
-            courses = xml_code?.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g)
+            courses = xml_code.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g)
+            if not courses
+                courses = xml_code.match(/<course>(.*?)<\/course>/g)
+                if not courses
+                    alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
+                    return false                    
 
             for i in [0...courses.length]
                 course_code = courses[i].match(/&lt;courseCode&gt;(.*?)&lt;\/courseCode&gt;/)?[1]
+                if not course_code
+                    course_code = courses[i].match(/<courseCode>(.*?)<\/courseCode>/)?[1]
                 L  = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)?[1]
+                if not L
+                    L  = courses[i].match(/<L>(.*?)<\/L>/)?[1]
                 T  = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)?[1]
+                if not T
+                    T  = courses[i].match(/<T>(.*?)<\/T>/)?[1]
                 LA = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)?[1]
+                if not LA
+                    LA = courses[i].match(/<LA>(.*?)<\/LA>/)?[1]
                 dept = course_code[..3]
                 numeric_code = course_code[4..]
                 

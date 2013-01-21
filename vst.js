@@ -402,19 +402,40 @@ if (!VST_LOADED) {
     tc = [[], [], [], [], [], [], []];
     semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1];
     $('div#classes').load("https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20" + semcode.slice(0, 2) + "&p_reg_semes_cde=" + semcode[2], function() {
-      var L, LA, T, course_code, courses, dept, i, my_call_back, numeric_code, xml_code, _i, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _results;
+      var L, LA, T, course_code, courses, dept, i, my_call_back, numeric_code, xml_code, _i, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
+      console.log($('div#classes').html());
       xml_code = (_ref = $('div#classes').html().match(/id="xml" value="(.*?)"/)) != null ? _ref[1] : void 0;
+      console.log(xml_code);
       if (!xml_code) {
         alert("ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually");
         return false;
       }
-      courses = xml_code != null ? xml_code.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g) : void 0;
+      courses = xml_code.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g);
+      if (!courses) {
+        courses = xml_code.match(/<course>(.*?)<\/course>/g);
+        if (!courses) {
+          alert("ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually");
+          return false;
+        }
+      }
       _results = [];
       for (i = _i = 0, _ref1 = courses.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
         course_code = (_ref2 = courses[i].match(/&lt;courseCode&gt;(.*?)&lt;\/courseCode&gt;/)) != null ? _ref2[1] : void 0;
-        L = (_ref3 = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)) != null ? _ref3[1] : void 0;
-        T = (_ref4 = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)) != null ? _ref4[1] : void 0;
-        LA = (_ref5 = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)) != null ? _ref5[1] : void 0;
+        if (!course_code) {
+          course_code = (_ref3 = courses[i].match(/<courseCode>(.*?)<\/courseCode>/)) != null ? _ref3[1] : void 0;
+        }
+        L = (_ref4 = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)) != null ? _ref4[1] : void 0;
+        if (!L) {
+          L = (_ref5 = courses[i].match(/<L>(.*?)<\/L>/)) != null ? _ref5[1] : void 0;
+        }
+        T = (_ref6 = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)) != null ? _ref6[1] : void 0;
+        if (!T) {
+          T = (_ref7 = courses[i].match(/<T>(.*?)<\/T>/)) != null ? _ref7[1] : void 0;
+        }
+        LA = (_ref8 = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)) != null ? _ref8[1] : void 0;
+        if (!LA) {
+          LA = (_ref9 = courses[i].match(/<LA>(.*?)<\/LA>/)) != null ? _ref9[1] : void 0;
+        }
         dept = course_code.slice(0, 4);
         numeric_code = course_code.slice(4);
         my_call_back = (function(L, T, LA, dept, numeric_code) {
