@@ -7,21 +7,29 @@ if (!VST_LOADED) {
   tt = [[], [], [], [], [], [], []];
   tc = [[], [], [], [], [], [], []];
   visible = true;
-  go_to = function(dept, ccode) {
+  go_to = function(dept, ccode, call_back) {
     var semcode, url;
     if (ccode == null) {
       ccode = '';
+    }
+    if (call_back == null) {
+      call_back = '';
     }
     dept = dept.toUpperCase();
     semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1];
     url = "https://w5.ab.ust.hk/wcq/cgi-bin/" + semcode + "/subject/" + dept;
     $('div#classes').load(url + ' div#classes', function() {
       document.title = dept + document.title.slice(4);
-      $('tr.sectodd, tr.secteven').unbind('click').click(click_event);
+      $('tr.sectodd, tr.secteven').css({
+        'cursor': 'pointer'
+      }).unbind('click').click(click_event);
       if (!ccode) {
-        return $(window).scrollTop(0);
+        $(window).scrollTop(0);
       } else {
-        return $(window).scrollTop($("a[name=" + (dept + ccode) + "]").offset().top - navHeight);
+        $(window).scrollTop($("a[name=" + (dept + ccode) + "]").offset().top - navHeight);
+      }
+      if (call_back) {
+        return call_back();
       }
     });
     return false;
@@ -358,7 +366,7 @@ if (!VST_LOADED) {
       _ref2 = tt[dow];
       for (_n = 0, _len2 = _ref2.length; _n < _len2; _n++) {
         l = _ref2[_n];
-        $("<div id='" + l.section + "' class='topmost popup' style='height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'><div class='popupdetail'><a href='#' class='goto'>GOTO</a>\u00A0<a href='#' class='del'>DELETE</a></div></div>").data({
+        $("<div id='" + l.section + "' class='topmost popup' style='height: " + ((l.end_time - l.start_time + 1) * 20 + l.end_time - l.start_time) + "px'><div class='popupdetail'><a href='#' class='goto'>DETAILS</a>\u00A0<a href='#' class='del'>DROP</a></div></div>").data({
           'section': l.section,
           'ccode': l.ccode
         }).appendTo("\#r" + l.start_time + " \#c" + (l.dow + 1) + " div.outer");
@@ -378,10 +386,53 @@ if (!VST_LOADED) {
           ENTRY POINT
   */
 
-  $("<style>\n/*!\n * Bootstrap v2.2.2\n *\n * Copyright 2012 Twitter, Inc\n * Licensed under the Apache License v2.0\n * http://www.apache.org/licenses/LICENSE-2.0\n *\n * Designed and built with all the love in the world @twitter by @mdo and @fat.\n */\n.clearfix{*zoom:1;}.clearfix:before,.clearfix:after{display:table;content:\"\";line-height:0;}\n.clearfix:after{clear:both;}\n.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}\n.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}\ntable{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}\n.table{width:100%;margin-bottom:20px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}\n.table th{font-weight:bold;}\n.table thead th{vertical-align:bottom;}\n.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}\n.table tbody+tbody{border-top:2px solid #dddddd;}\n.table .table{background-color:#ffffff;}\n.table-condensed th,.table-condensed td{padding:4px 5px;}\n.table-bordered{border:1px solid #dddddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}.table-bordered th,.table-bordered td{border-left:1px solid #dddddd;}\n.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0;}\n.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child{-webkit-border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px;border-bottom-left-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child{-webkit-border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px;border-bottom-right-radius:4px;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;-moz-border-radius-bottomleft:0;border-bottom-left-radius:0;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;-moz-border-radius-bottomright:0;border-bottom-right-radius:0;}\n.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9;}\n.table-hover tbody tr:hover td,.table-hover tbody tr:hover th{background-color:#f5f5f5;}\ntable td[class*=\"span\"],table th[class*=\"span\"],.row-fluid table td[class*=\"span\"],.row-fluid table th[class*=\"span\"]{display:table-cell;float:none;margin-left:0;}\n.table td.span1,.table th.span1{float:none;width:44px;margin-left:0;}\n.table td.span2,.table th.span2{float:none;width:124px;margin-left:0;}\n.table td.span3,.table th.span3{float:none;width:204px;margin-left:0;}\n.table td.span4,.table th.span4{float:none;width:284px;margin-left:0;}\n.table td.span5,.table th.span5{float:none;width:364px;margin-left:0;}\n.table td.span6,.table th.span6{float:none;width:444px;margin-left:0;}\n.table td.span7,.table th.span7{float:none;width:524px;margin-left:0;}\n.table td.span8,.table th.span8{float:none;width:604px;margin-left:0;}\n.table td.span9,.table th.span9{float:none;width:684px;margin-left:0;}\n.table td.span10,.table th.span10{float:none;width:764px;margin-left:0;}\n.table td.span11,.table th.span11{float:none;width:844px;margin-left:0;}\n.table td.span12,.table th.span12{float:none;width:924px;margin-left:0;}\n.table tbody tr.success td{background-color:#dff0d8;}\n.table tbody tr.error td{background-color:#f2dede;}\n.table tbody tr.warning td{background-color:#fcf8e3;}\n.table tbody tr.info td{background-color:#d9edf7;}\n.table-hover tbody tr.success:hover td{background-color:#d0e9c6;}\n.table-hover tbody tr.error:hover td{background-color:#ebcccc;}\n.table-hover tbody tr.warning:hover td{background-color:#faf2cc;}\n.table-hover tbody tr.info:hover td{background-color:#c4e3f3;}\n\n\ntable#vst td {\n    /*border: 1px black solid;*/\n    /*font-family:monospace;*/\n    background-color: white;\n    position: relative;\n    padding: 0px;\n    white-space: nowrap;\n    height: 20px;\n    width: 90px;\n}\ntable#vst th {\n    background-color: white;\n}\n.outer {\n    position: relative;\n    display: block;\n}\n.mydiv {\n    width: 100%;\n    position: absolute;\n    left: 0;\n    top: 0;\n    z-index: 2;\n    text-align: center;\n}\n.time-conflict {\n    border: 2px red dotted;\n    width: 100%;\n    position: absolute;\n    left: -2px;\n    top:  -2px;\n    z-index: 3;\n}\n.topmost {\n    width: 100%;\n    position: absolute;\n    left: 0;\n    top: 0;\n    z-index: 4;\n}\n</style>\n            <script src=\"https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js\" type=\"text/javascript\"></script>\n            <div id=\"myTimetable\" style=\"background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; \">\n                <div id=\"container\"></div>\n                <a href=\"#\" id=\"toggle_show\">show/hide</a>\n            </div>").appendTo('body');
+  $("<style>\n/*!\n * Bootstrap v2.2.2\n *\n * Copyright 2012 Twitter, Inc\n * Licensed under the Apache License v2.0\n * http://www.apache.org/licenses/LICENSE-2.0\n *\n * Designed and built with all the love in the world @twitter by @mdo and @fat.\n */\n.clearfix{*zoom:1;}.clearfix:before,.clearfix:after{display:table;content:\"\";line-height:0;}\n.clearfix:after{clear:both;}\n.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}\n.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}\ntable{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}\n.table{width:100%;margin-bottom:5px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}\n.table th{font-weight:bold;}\n.table thead th{vertical-align:bottom;}\n.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}\n.table tbody+tbody{border-top:2px solid #dddddd;}\n.table .table{background-color:#ffffff;}\n.table-condensed th,.table-condensed td{padding:4px 5px;}\n.table-bordered{border:1px solid #dddddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}.table-bordered th,.table-bordered td{border-left:1px solid #dddddd;}\n.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0;}\n.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child{-webkit-border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px;border-bottom-left-radius:4px;}\n.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child{-webkit-border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px;border-bottom-right-radius:4px;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;-moz-border-radius-bottomleft:0;border-bottom-left-radius:0;}\n.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;-moz-border-radius-bottomright:0;border-bottom-right-radius:0;}\n.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}\n.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}\n.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9;}\n.table-hover tbody tr:hover td,.table-hover tbody tr:hover th{background-color:#f5f5f5;}\ntable td[class*=\"span\"],table th[class*=\"span\"],.row-fluid table td[class*=\"span\"],.row-fluid table th[class*=\"span\"]{display:table-cell;float:none;margin-left:0;}\n.table td.span1,.table th.span1{float:none;width:44px;margin-left:0;}\n.table td.span2,.table th.span2{float:none;width:124px;margin-left:0;}\n.table td.span3,.table th.span3{float:none;width:204px;margin-left:0;}\n.table td.span4,.table th.span4{float:none;width:284px;margin-left:0;}\n.table td.span5,.table th.span5{float:none;width:364px;margin-left:0;}\n.table td.span6,.table th.span6{float:none;width:444px;margin-left:0;}\n.table td.span7,.table th.span7{float:none;width:524px;margin-left:0;}\n.table td.span8,.table th.span8{float:none;width:604px;margin-left:0;}\n.table td.span9,.table th.span9{float:none;width:684px;margin-left:0;}\n.table td.span10,.table th.span10{float:none;width:764px;margin-left:0;}\n.table td.span11,.table th.span11{float:none;width:844px;margin-left:0;}\n.table td.span12,.table th.span12{float:none;width:924px;margin-left:0;}\n.table tbody tr.success td{background-color:#dff0d8;}\n.table tbody tr.error td{background-color:#f2dede;}\n.table tbody tr.warning td{background-color:#fcf8e3;}\n.table tbody tr.info td{background-color:#d9edf7;}\n.table-hover tbody tr.success:hover td{background-color:#d0e9c6;}\n.table-hover tbody tr.error:hover td{background-color:#ebcccc;}\n.table-hover tbody tr.warning:hover td{background-color:#faf2cc;}\n.table-hover tbody tr.info:hover td{background-color:#c4e3f3;}\n\n\ntable#vst td {\n    /*border: 1px black solid;*/\n    /*font-family:monospace;*/\n    background-color: white;\n    position: relative;\n    padding: 0px;\n    white-space: nowrap;\n    height: 20px;\n    width: 90px;\n}\ntable#vst th {\n    background-color: white;\n}\n.outer {\n    position: relative;\n    display: block;\n}\n.mydiv {\n    width: 100%;\n    position: absolute;\n    left: 0;\n    top: 0;\n    z-index: 2;\n    text-align: center;\n}\n.time-conflict {\n    border: 2px red dotted;\n    width: 100%;\n    position: absolute;\n    left: -2px;\n    top:  -2px;\n    z-index: 3;\n}\n.topmost {\n    width: 100%;\n    position: absolute;\n    left: 0;\n    top: 0;\n    z-index: 4;\n}\n</style>\n            <script src=\"https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js\" type=\"text/javascript\"></script>\n            <div id=\"myTimetable\" style=\"background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; \">\n                <div id=\"container\">\n                    <h1>How to use:</h1>\n                    Click the section of the course to add that section to time table.<br><br>\n                    To delete the section from your time table,<br>\n                    click DROP when your mouse is over the section on the timetable.<br><br>\n                    Clicking hyperlinks other than the department names<br>\n                    Or clicking the BACK/NEXT/REFRESH button of the browser<br>\n                    will erase your work\n                </div>\n                <a href=\"#\" id=\"toggle_show\">show/hide</a>\n                <br>\n                <a href=\"#\" id=\"load_confirmed\">load confirmed enrollment</a>\n            </div>").appendTo('body');
   $('#toggle_show').click(function() {
     $('#container').toggle(120);
     visible = !visible;
+    return false;
+  });
+  $('#load_confirmed').click(function() {
+    var semcode;
+    if (!visible) {
+      return false;
+    }
+    alert("This would clear your current timetable\nAnd it may take some time to finish\nWorks only for the current semester\nLogin required");
+    tt = [[], [], [], [], [], [], []];
+    tc = [[], [], [], [], [], [], []];
+    semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1];
+    $('div#classes').load("https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20" + semcode.slice(0, 2) + "&p_reg_semes_cde=" + semcode[2], function() {
+      var L, LA, T, course_code, courses, dept, i, my_call_back, numeric_code, xml_code, _i, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _results;
+      xml_code = (_ref = $('div#classes').html().match(/id="xml" value="(.*?)"/)) != null ? _ref[1] : void 0;
+      if (!xml_code) {
+        alert("ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually");
+        return false;
+      }
+      courses = xml_code != null ? xml_code.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g) : void 0;
+      _results = [];
+      for (i = _i = 0, _ref1 = courses.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
+        course_code = (_ref2 = courses[i].match(/&lt;courseCode&gt;(.*?)&lt;\/courseCode&gt;/)) != null ? _ref2[1] : void 0;
+        L = (_ref3 = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)) != null ? _ref3[1] : void 0;
+        T = (_ref4 = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)) != null ? _ref4[1] : void 0;
+        LA = (_ref5 = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)) != null ? _ref5[1] : void 0;
+        dept = course_code.slice(0, 4);
+        numeric_code = course_code.slice(4);
+        my_call_back = (function(L, T, LA, dept, numeric_code) {
+          return function() {
+            return $("a[name=" + (dept + numeric_code) + "]").parents('.course').find('.sections').find('tr').each(function() {
+              var first_cell_content;
+              first_cell_content = $(this).find('td').first().text();
+              first_cell_content = first_cell_content.slice(0, first_cell_content.indexOf(' '));
+              if (first_cell_content === L || first_cell_content === T || first_cell_content === LA) {
+                return $(this).click();
+              }
+            });
+          };
+        })(L, T, LA, dept, numeric_code);
+        _results.push(go_to(dept, numeric_code, my_call_back));
+      }
+      return _results;
+    });
     return false;
   });
   highlight = function() {
@@ -390,7 +441,9 @@ if (!VST_LOADED) {
   dehighlight = function() {
     return this.style.border = "0";
   };
-  $('tr.sectodd, tr.secteven').click(click_event);
+  $('tr.sectodd, tr.secteven').css({
+    'cursor': 'pointer'
+  }).click(click_event);
   bring_to_top = function() {
     return this.style.zIndex = 9999;
   };
@@ -401,7 +454,9 @@ if (!VST_LOADED) {
     var _this = this;
     $('div#classes').load(this.href + ' div#classes', function() {
       document.title = _this.href.slice(-4) + document.title.slice(4);
-      $('tr.sectodd, tr.secteven').unbind('click').click(click_event);
+      $('tr.sectodd, tr.secteven').css({
+        'cursor': 'pointer'
+      }).unbind('click').click(click_event);
       $(window).scrollTop(0);
       return false;
     });

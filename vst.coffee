@@ -13,18 +13,22 @@ if not VST_LOADED
     tc = [[],[],[],[],[],[],[]]     # Time conflict
     visible = true                  # visibility of the timetable
 
-    go_to = (dept, ccode='')->
+    go_to = (dept, ccode='', call_back='')->
         # An example: https://w5.ab.ust.hk/wcq/cgi-bin/1220/
         dept = dept.toUpperCase()
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         url = "https://w5.ab.ust.hk/wcq/cgi-bin/#{semcode}/subject/#{dept}"
         $('div#classes').load url+' div#classes', ->
             document.title = dept + document.title[4..]
-            $('tr.sectodd, tr.secteven').unbind('click').click click_event
+            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click click_event
             if not ccode
                 $(window).scrollTop(0)
             else
                 $(window).scrollTop($("a[name=#{dept+ccode}]").offset().top-navHeight)
+
+            if call_back
+                call_back()
+
         return false
 
     hsv_to_rgb = (h, s, v)->
@@ -252,7 +256,7 @@ if not VST_LOADED
 
         for dow in [0...range]
             for l in tt[dow]
-                $("<div id='#{l.section}' class='topmost popup' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'><div class='popupdetail'><a href='#' class='goto'>GOTO</a>\u00A0<a href='#' class='del'>DELETE</a></div></div>")
+                $("<div id='#{l.section}' class='topmost popup' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'><div class='popupdetail'><a href='#' class='goto'>DETAILS</a>\u00A0<a href='#' class='del'>DROP</a></div></div>")
                 .data({'section': l.section, 'ccode': l.ccode})
                 .appendTo("\#r#{l.start_time} \#c#{l.dow+1} div.outer")
 
@@ -293,7 +297,7 @@ if not VST_LOADED
 .hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}
 .input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}
 table{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}
-.table{width:100%;margin-bottom:20px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}
+.table{width:100%;margin-bottom:5px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}
 .table th{font-weight:bold;}
 .table thead th{vertical-align:bottom;}
 .table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}
@@ -378,8 +382,18 @@ table#vst th {
 </style>
             <script src="https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js" type="text/javascript"></script>
             <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; ">
-                <div id="container"></div>
+                <div id="container">
+                    <h1>How to use:</h1>
+                    Click the section of the course to add that section to time table.<br><br>
+                    To delete the section from your time table,<br>
+                    click DROP when your mouse is over the section on the timetable.<br><br>
+                    Clicking hyperlinks other than the department names<br>
+                    Or clicking the BACK/NEXT/REFRESH button of the browser<br>
+                    will erase your work
+                </div>
                 <a href="#" id="toggle_show">show/hide</a>
+                <br>
+                <a href="#" id="load_confirmed">load confirmed enrollment</a>
             </div>
         """
     ).appendTo('body')
@@ -389,12 +403,58 @@ table#vst th {
         visible = not visible
         return false
 
+    $('#load_confirmed').click ->
+        if not visible
+            return false
+        alert """
+            This would clear your current timetable
+            And it may take some time to finish
+            Works only for the current semester
+            Login required
+        """
+
+        tt = [[],[],[],[],[],[],[]]
+        tc = [[],[],[],[],[],[],[]]
+
+        semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
+        $('div#classes').load "https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20#{semcode[..1]}&p_reg_semes_cde=#{semcode[2]}", ->
+            xml_code = $('div#classes').html().match(/id="xml" value="(.*?)"/)?[1]
+            if not xml_code
+                alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
+                return false
+            courses = xml_code?.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g)
+
+            for i in [0...courses.length]
+                course_code = courses[i].match(/&lt;courseCode&gt;(.*?)&lt;\/courseCode&gt;/)?[1]
+                L  = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)?[1]
+                T  = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)?[1]
+                LA = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)?[1]
+                dept = course_code[..3]
+                numeric_code = course_code[4..]
+                
+                my_call_back = ((L, T, LA, dept, numeric_code) ->
+                    ->
+                        $("a[name=#{dept+numeric_code}]").parents('.course').find('.sections').find('tr').each ->
+                            first_cell_content = $(@).find('td').first().text()
+                            # console.log first_cell_content
+                            first_cell_content = first_cell_content[...first_cell_content.indexOf(' ')]
+                            if first_cell_content is L or first_cell_content is T or first_cell_content is LA
+                                $(@).click()
+
+                )(L, T, LA, dept, numeric_code)
+
+                go_to(dept, numeric_code, my_call_back)
+
+                # console.log course_code, L, T, LA
+
+        return false
+
     highlight = ->
         this.style.border = "2px solid yellow"
     dehighlight = ->
         this.style.border = "0"
 
-    $('tr.sectodd, tr.secteven').click(click_event)#.hover(highlight, dehighlight)
+    $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).click(click_event)#.hover(highlight, dehighlight)
 
     bring_to_top = ->
         this.style.zIndex = 9999
@@ -404,7 +464,7 @@ table#vst th {
     $('div#navigator').hover(bring_to_top, bring_to_back).find('div.depts').find('a').click ->
         $('div#classes').load @href+' div#classes', =>
             document.title = @href[-4..] + document.title[4..]
-            $('tr.sectodd, tr.secteven').unbind('click').click click_event
+            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click click_event
             # window.location.hash = '#'
             $(window).scrollTop(0)
             return false
