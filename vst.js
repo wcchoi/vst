@@ -406,7 +406,7 @@ if (!VST_LOADED) {
       if (typeof console !== "undefined" && console !== null) {
         console.log($('div#classes').html());
       }
-      xml_code = (_ref = $('div#classes').html().match(/id="xml" value="(.*?)"/)) != null ? _ref[1] : void 0;
+      xml_code = (_ref = $('div#classes').html().match(/<input name="xml".*?value="(.*?)"/)) != null ? _ref[1] : void 0;
       if (typeof console !== "undefined" && console !== null) {
         console.log(xml_code);
       }
