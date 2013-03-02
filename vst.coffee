@@ -1,13 +1,21 @@
 # ViSual Timetable
 # SOLVED: TIME CONFLICT show SAT SUN problem
 # SOLVED: When invisible, click_event should have no effect
-# TODO: colgroup and constant column width for nice appearence
-# TODO: click the added course to jump to the corresponding course table
+# SOLVED: colgroup and constant column width for nice appearence
+# SOLVED: click the added course to jump to the corresponding course table
 # TODO: clicking the COMMON CORE/ search will work
 # TODO: add a loading indicator
+# TODO: back/forward button work
+# TODO: hover preview
+# TODO: check current page is really quota page
+# TODO: warn user if they're going to leave the current page
 
-if not VST_LOADED
-    VST_LOADED = true
+BASE_URL = "https://ihome.ust.hk/~wcchoi/yatta"
+
+if YATTA_LOADED
+    alert "Error: Yatta already loaded"    
+else
+    YATTA_LOADED = true
 
     tt = [[],[],[],[],[],[],[]]     # Time table
     tc = [[],[],[],[],[],[],[]]     # Time conflict
@@ -31,24 +39,24 @@ if not VST_LOADED
 
         return false
 
-    hsv_to_rgb = (h, s, v)->
-        h_i = Math.floor(h*6)
-        f = h*6 - h_i
-        p = v * (1 - s)
-        q = v * (1 - f*s)
-        t = v * (1 - (1 - f) * s)
-        [r, g, b] = [v, t, p] if h_i is 0
-        [r, g, b] = [q, v, p] if h_i is 1
-        [r, g, b] = [p, v, t] if h_i is 2
-        [r, g, b] = [p, q, v] if h_i is 3
-        [r, g, b] = [t, p, v] if h_i is 4
-        [r, g, b] = [v, p, q] if h_i is 5
-        rgb = [Math.floor(r*256), Math.floor(g*256), Math.floor(b*256)]
-
     get_random_color = ->
         ###
             based on http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
         ###
+        hsv_to_rgb = (h, s, v)->
+            h_i = Math.floor(h*6)
+            f = h*6 - h_i
+            p = v * (1 - s)
+            q = v * (1 - f*s)
+            t = v * (1 - (1 - f) * s)
+            [r, g, b] = [v, t, p] if h_i is 0
+            [r, g, b] = [q, v, p] if h_i is 1
+            [r, g, b] = [p, v, t] if h_i is 2
+            [r, g, b] = [p, q, v] if h_i is 3
+            [r, g, b] = [t, p, v] if h_i is 4
+            [r, g, b] = [v, p, q] if h_i is 5
+            rgb = [Math.floor(r*256), Math.floor(g*256), Math.floor(b*256)]
+
         golden_ratio_conjugate = 0.618033988749895
         h = Math.random()
         h += golden_ratio_conjugate
@@ -109,7 +117,9 @@ if not VST_LOADED
         
     click_event = ->
         if not visible
-            return
+            $('#container').toggle(120)
+            visible = true
+            return false
 
         # console?.log "click event fired"
         # Reinitialize tc
@@ -282,105 +292,8 @@ if not VST_LOADED
 
     $(
         """
-<style>
-/*!
- * Bootstrap v2.2.2
- *
- * Copyright 2012 Twitter, Inc
- * Licensed under the Apache License v2.0
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Designed and built with all the love in the world @twitter by @mdo and @fat.
- */
-.clearfix{*zoom:1;}.clearfix:before,.clearfix:after{display:table;content:"";line-height:0;}
-.clearfix:after{clear:both;}
-.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;}
-.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;}
-table{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0;}
-.table{width:100%;margin-bottom:5px;}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #dddddd;}
-.table th{font-weight:bold;}
-.table thead th{vertical-align:bottom;}
-.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0;}
-.table tbody+tbody{border-top:2px solid #dddddd;}
-.table .table{background-color:#ffffff;}
-.table-condensed th,.table-condensed td{padding:4px 5px;}
-.table-bordered{border:1px solid #dddddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}.table-bordered th,.table-bordered td{border-left:1px solid #dddddd;}
-.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0;}
-.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}
-.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}
-.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child{-webkit-border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px;border-bottom-left-radius:4px;}
-.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child{-webkit-border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px;border-bottom-right-radius:4px;}
-.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;-moz-border-radius-bottomleft:0;border-bottom-left-radius:0;}
-.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;-moz-border-radius-bottomright:0;border-bottom-right-radius:0;}
-.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;-moz-border-radius-topleft:4px;border-top-left-radius:4px;}
-.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;-moz-border-radius-topright:4px;border-top-right-radius:4px;}
-.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9;}
-.table-hover tbody tr:hover td,.table-hover tbody tr:hover th{background-color:#f5f5f5;}
-table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span"],.row-fluid table th[class*="span"]{display:table-cell;float:none;margin-left:0;}
-.table td.span1,.table th.span1{float:none;width:44px;margin-left:0;}
-.table td.span2,.table th.span2{float:none;width:124px;margin-left:0;}
-.table td.span3,.table th.span3{float:none;width:204px;margin-left:0;}
-.table td.span4,.table th.span4{float:none;width:284px;margin-left:0;}
-.table td.span5,.table th.span5{float:none;width:364px;margin-left:0;}
-.table td.span6,.table th.span6{float:none;width:444px;margin-left:0;}
-.table td.span7,.table th.span7{float:none;width:524px;margin-left:0;}
-.table td.span8,.table th.span8{float:none;width:604px;margin-left:0;}
-.table td.span9,.table th.span9{float:none;width:684px;margin-left:0;}
-.table td.span10,.table th.span10{float:none;width:764px;margin-left:0;}
-.table td.span11,.table th.span11{float:none;width:844px;margin-left:0;}
-.table td.span12,.table th.span12{float:none;width:924px;margin-left:0;}
-.table tbody tr.success td{background-color:#dff0d8;}
-.table tbody tr.error td{background-color:#f2dede;}
-.table tbody tr.warning td{background-color:#fcf8e3;}
-.table tbody tr.info td{background-color:#d9edf7;}
-.table-hover tbody tr.success:hover td{background-color:#d0e9c6;}
-.table-hover tbody tr.error:hover td{background-color:#ebcccc;}
-.table-hover tbody tr.warning:hover td{background-color:#faf2cc;}
-.table-hover tbody tr.info:hover td{background-color:#c4e3f3;}
-
-
-table#vst td {
-    /*border: 1px black solid;*/
-    /*font-family:monospace;*/
-    background-color: white;
-    position: relative;
-    padding: 0px;
-    white-space: nowrap;
-    height: 20px;
-    width: 90px;
-}
-table#vst th {
-    background-color: white;
-}
-.outer {
-    position: relative;
-    display: block;
-}
-.mydiv {
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 2;
-    text-align: center;
-}
-.time-conflict {
-    border: 2px red dotted;
-    width: 100%;
-    position: absolute;
-    left: -2px;
-    top:  -2px;
-    z-index: 3;
-}
-.topmost {
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 4;
-}
-</style>
-            <script src="https://raw.github.com/adius/DOMinate/master/src/dominate.essential.min.js" type="text/javascript"></script>
+            <link rel="stylesheet" type="text/css" href="#{BASE_URL}/mystyle.css">
+            <script src="#{BASE_URL}/dominate.essential.min.js" type="text/javascript"></script>
             <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; ">
                 <div id="container">
                     <h1>How to use:</h1>
@@ -407,10 +320,10 @@ table#vst th {
         if not visible
             return false
         alert """
-            This would clear your current timetable
-            And it may take some time to finish
-            Works only for the current semester
-            Login required
+            - This would clear your current timetable
+            - And it may take some time to finish
+            - Works only for the current semester
+            - Login required
         """
 
         tt = [[],[],[],[],[],[],[]]
@@ -418,35 +331,20 @@ table#vst th {
 
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         $('div#classes').load "https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20#{semcode[..1]}&p_reg_semes_cde=#{semcode[2]}", ->
-            console?.log $('div#classes').html()
-            xml_code = $('div#classes').html().match(/<input name="xml".*?value="(.*?)"/)?[1]
-            console?.log xml_code
-            if not xml_code
-                alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
+            xml_doc = $('div#classes').find('#xml').attr('value')
+            if xml_doc is undefined
+                alert "Cannot load confirmed enrollment"
                 return false
-            courses = xml_code.match(/&lt;course&gt;(.*?)&lt;\/course&gt;/g)
-            if not courses
-                courses = xml_code.match(/<course>(.*?)<\/course>/g)
-                if not courses
-                    alert "ERROR: Cannot fetch your confirmed enrollment for this semester\nPlease add the classes manually"
-                    return false                    
-
-            for i in [0...courses.length]
-                course_code = courses[i].match(/&lt;courseCode&gt;(.*?)&lt;\/courseCode&gt;/)?[1]
-                if not course_code
-                    course_code = courses[i].match(/<courseCode>(.*?)<\/courseCode>/)?[1]
-                L  = courses[i].match(/&lt;L&gt;(.*?)&lt;\/L&gt;/)?[1]
-                if not L
-                    L  = courses[i].match(/<L>(.*?)<\/L>/)?[1]
-                T  = courses[i].match(/&lt;T&gt;(.*?)&lt;\/T&gt;/)?[1]
-                if not T
-                    T  = courses[i].match(/<T>(.*?)<\/T>/)?[1]
-                LA = courses[i].match(/&lt;LA&gt;(.*?)&lt;\/LA&gt;/)?[1]
-                if not LA
-                    LA = courses[i].match(/<LA>(.*?)<\/LA>/)?[1]
-                dept = course_code[..3]
+            $xml = $( $.parseXML(xml_doc) )
+            $courses = $xml.find("course")
+            for course in $courses
+                course_code  = $(course).find('courseCode').text()
+                T            = $(course).find('T').text()
+                LA           = $(course).find('LA').text()
+                L            = $(course).find('L').text()
+                dept         = course_code[..3]
                 numeric_code = course_code[4..]
-                
+
                 my_call_back = ((L, T, LA, dept, numeric_code) ->
                     ->
                         $("a[name=#{dept+numeric_code}]").parents('.course').find('.sections').find('tr').each ->
@@ -460,16 +358,9 @@ table#vst th {
 
                 go_to(dept, numeric_code, my_call_back)
 
-                # console?.log course_code, L, T, LA
-
         return false
 
-    highlight = ->
-        this.style.border = "2px solid yellow"
-    dehighlight = ->
-        this.style.border = "0"
-
-    $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).click(click_event)#.hover(highlight, dehighlight)
+    $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).click(click_event)
 
     bring_to_top = ->
         this.style.zIndex = 9999
@@ -484,6 +375,3 @@ table#vst th {
             $(window).scrollTop(0)
             return false
         return false
-
-else
-    alert "VST already loaded"
