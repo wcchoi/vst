@@ -1,4 +1,8 @@
 # ViSual Timetable
+# Now renamed Yet Another Timetable Assistant (yatta)
+########
+# WARNING: SLOPPY CODE!!!!
+########
 # SOLVED: TIME CONFLICT show SAT SUN problem
 # SOLVED: When invisible, click_event should have no effect
 # SOLVED: colgroup and constant column width for nice appearence
@@ -19,6 +23,7 @@ else
 
     tt = [[],[],[],[],[],[],[]]     # Time table
     tc = [[],[],[],[],[],[],[]]     # Time conflict
+    tt_preview = [[],[],[],[],[],[],[]]     # Preview of timetable
     visible = true                  # visibility of the timetable
 
     go_to = (dept, ccode='', call_back='')->
@@ -28,7 +33,7 @@ else
         url = "https://w5.ab.ust.hk/wcq/cgi-bin/#{semcode}/subject/#{dept}"
         $('div#classes').load url+' div#classes', ->
             document.title = dept + document.title[4..]
-            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click click_event
+            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click(click_event).hover(hover_in_event, hover_out_event)
             if not ccode
                 $(window).scrollTop(0)
             else
@@ -115,26 +120,15 @@ else
         
         return result
         
-    click_event = ->
-        if not visible
-            $('#container').toggle(120)
-            visible = true
-            return false
-
-        # console?.log "click event fired"
-        # Reinitialize tc
-        tc = [[],[],[],[],[],[],[]]
-
-        # console?.log this
-
+    get_rowspan = (elem) ->
         timeslots = []
         
-        course_name  = $(@).parents('.course').find('h2').text()
+        course_name  = $(elem).parents('.course').find('h2').text()
         course_code  = course_name[...course_name.indexOf('-')-1]
         course_color = get_random_color()
 
 
-        $first_row = $(@)
+        $first_row = $(elem)
         if not $first_row.is('.newsect')
             $first_row = $first_row.prevAll('.newsect:first')
         
@@ -142,6 +136,7 @@ else
         
         $rows = [$first_row]
         $rest = $first_row.nextUntil('.newsect')
+
         if $rest.length
             $rows = $rows.concat($rest.clone().prepend("<td>#{sect}</td>"))
         
@@ -156,7 +151,22 @@ else
                 datetime = datetime[25..]   #get rid of the date
             
             timeslots = timeslots.concat(process_datetime(datetime, room, section, course_code, course_color))
-        
+
+        return timeslots
+
+    click_event = ->
+        if not visible
+            $('#container').toggle(120)
+            visible = true
+            return false
+
+        # console?.log "click event fired"
+        # Reinitialize tc
+        tc = [[],[],[],[],[],[],[]]
+
+        # console?.log this
+
+        timeslots = get_rowspan @        
 
         no_time_conflict = true
 
@@ -176,6 +186,37 @@ else
         
         return false   # return value
         #console?.log datetime
+
+    hover_in_event = ->
+        if not visible
+            return false
+
+        tt_preview = [[],[],[],[],[],[],[]]
+
+        timeslots = get_rowspan @
+        no_time_conflict = true
+        for lesson in timeslots
+            for l in tt[lesson.dow]
+                if check_time_conflict(l, lesson)
+                    no_time_conflict = false
+
+        if not no_time_conflict
+            for lesson in timeslots
+                tc[lesson.dow].push(lesson)
+        else
+            for lesson in timeslots
+                tt_preview[lesson.dow].push(lesson)
+
+        generate_table()
+
+        return false
+
+    hover_out_event = ->
+        tt_preview = [[],[],[],[],[],[],[]]
+        tc = [[],[],[],[],[],[],[]]
+        generate_table()
+
+        return false
 
     delete_sect = (sect)->
         console?.log sect
@@ -206,12 +247,19 @@ else
         # 18 is 09:00, 37 is 18:30
         # the idiom [].concat(array...) flattens the array
         # ie. [[1,2,3],[4,5,6],[7,8,9]] -> [1,2,3,4,5,6,7,8,9]
-        earliest_start_time = Math.min(18, (l.start_time for l in [].concat(tt...))..., (l.start_time for l in [].concat(tc...))...)
-        latest_end_time     = Math.max(37, (l.end_time for l in [].concat(tt...))..., (l.end_time for l in [].concat(tc...))...)
+        earliest_start_time = Math.min(18, 
+                                       (l.start_time for l in [].concat(tt...))...,
+                                       (l.start_time for l in [].concat(tc...))...,
+                                       (l.start_time for l in [].concat(tt_preview...))...)
+
+        latest_end_time     = Math.max(37, 
+                                       (l.end_time for l in [].concat(tt...))...,
+                                       (l.end_time for l in [].concat(tc...))...,
+                                       (l.end_time for l in [].concat(tt_preview...))...)
 
         DAYS = ['Time','MON', 'TUE', 'WED', 'THU', 'FRI']
-        SUN = tt[6].length isnt 0 or tc[6].length isnt 0
-        SAT     = tt[5].length isnt 0 or tc[5].length isnt 0
+        SUN = tt[6].length isnt 0 or tc[6].length isnt 0 or tt_preview[6].length isnt 0
+        SAT     = tt[5].length isnt 0 or tc[5].length isnt 0 or tt_preview[5].length isnt 0
         if SUN
             DAYS.push('SAT', 'SUN')
         else if SAT
@@ -219,8 +267,10 @@ else
 
         # exclude the 'Time'
         range = DAYS.length - 1 
+
         # \u00A0 is &nbsp;
         empty_cell = '\u00A0'
+
         # delete previous content
         $('#container').empty()
 
@@ -261,9 +311,17 @@ else
 
         for dow in [0...range]
             for l in tc[dow]
-                $("<div class='time-conflict' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>\u00A0</div>")
+                $("<div class='time-conflict' style='background-color: rgba(255, 0, 0, 0.3); height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>\u00A0</div>")
                 .appendTo("\#r#{l.start_time} \#c#{l.dow+1} div.outer")
 
+
+        # TODO: make the color *normal*
+        for dow in [0...range]
+            for l in tt_preview[dow]
+                $("<div id='#{l.section}' class='mydiv' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'>#{make_div_content(l)}</div>")
+                .appendTo("\#r#{l.start_time} \#c#{l.dow+1} div.outer")
+
+        # for making the invisible div on top of time conflict
         for dow in [0...range]
             for l in tt[dow]
                 $("<div id='#{l.section}' class='topmost popup' style='height: #{(l.end_time-l.start_time+1)*20+l.end_time-l.start_time}px'><div class='popupdetail'><a href='#' class='goto'>DETAILS</a>\u00A0<a href='#' class='del'>DROP</a></div></div>")
@@ -296,13 +354,7 @@ else
             <script src="#{BASE_URL}/dominate.essential.min.js" type="text/javascript"></script>
             <div id="myTimetable" style="background-color: #FFF; border: 2px solid #D4E0EC; padding: 0px; position: fixed; right: 5px; bottom: 5px; z-index: 1000; ">
                 <div id="container">
-                    <h1>How to use:</h1>
-                    Click the section of the course to add that section to time table.<br><br>
-                    To delete the section from your time table,<br>
-                    click DROP when your mouse is over the section on the timetable.<br><br>
-                    Clicking hyperlinks other than the department names<br>
-                    Or clicking the BACK/NEXT/REFRESH button of the browser<br>
-                    will erase your work
+                    <h1>Yet Another Timetable Assistant</h1>                    
                 </div>
                 <a href="#" id="toggle_show">show/hide</a>
                 <br>
@@ -332,9 +384,16 @@ else
         semcode = window.location.href.match(/https:\/\/w5.ab.ust.hk\/wcq\/cgi-bin\/(\d+)\//)[1]
         $('div#classes').load "https://w5.ab.ust.hk/cgi-bin/std_cgi.sh/WService=broker_si_p/prg/sita_enrol_ta_intf.r?p_stdt_id=&p_reg_acad_yr=20#{semcode[..1]}&p_reg_semes_cde=#{semcode[2]}", ->
             xml_doc = $('div#classes').find('#xml').attr('value')
+
             if xml_doc is undefined
-                alert "Cannot load confirmed enrollment"
+                alert """
+                        Error: Cannot load confirmed enrollment
+                        probably because:
+                        - You are not viewing the 'Class Schedule & Quota' of the current semester
+                        - You have no confirmed enrollment
+                """
                 return false
+
             $xml = $( $.parseXML(xml_doc) )
             $courses = $xml.find("course")
             for course in $courses
@@ -360,7 +419,7 @@ else
 
         return false
 
-    $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).click(click_event)
+    $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).click(click_event).hover(hover_in_event, hover_out_event)
 
     bring_to_top = ->
         this.style.zIndex = 9999
@@ -370,7 +429,7 @@ else
     $('div#navigator').hover(bring_to_top, bring_to_back).find('div.depts').find('a').click ->
         $('div#classes').load @href+' div#classes', =>
             document.title = @href[-4..] + document.title[4..]
-            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click click_event
+            $('tr.sectodd, tr.secteven').css({'cursor': 'pointer'}).unbind('click').click(click_event).hover(hover_in_event, hover_out_event)
             # window.location.hash = '#'
             $(window).scrollTop(0)
             return false
