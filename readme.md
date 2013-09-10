@@ -8,9 +8,10 @@ This is a simple tool to organize your timetable.
 Visit the [Class Schedule &amp; Quota Page](https://w5.ab.ust.hk/wcq/cgi-bin/1310/)
 
 Run the following code
-`$('<script src=https://ihome.ust.hk/~wcchoi/yatta/vst.js></script>').appendTo('body'); void(0);`
 **when you are on the quota page**
 by opening the **developer console** of your browser
+
+`$('<script src=https://ihome.ust.hk/~wcchoi/yatta/vst.js></script>').appendTo('body'); void(0);`
 
 In **Internet Explorer 10**, press `F12` and then click `console`, and then paste the code into the textbox with prompt `>>`.
 
